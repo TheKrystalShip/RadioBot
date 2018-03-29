@@ -1,6 +1,6 @@
-﻿using Discord.Audio;
+﻿using Discord;
+using Discord.Audio;
 using Discord.Commands;
-using Discord.WebSocket;
 
 using System;
 using System.Collections.Concurrent;
@@ -11,13 +11,17 @@ namespace RadioBot.Services
 {
 	public class RadioService : Service
     {
+		// Stores each guild's audio client
 		private readonly ConcurrentDictionary<ulong, IAudioClient> ConnectedChannels =
 			new ConcurrentDictionary<ulong, IAudioClient>();
 
 		public async Task JoinChannel(IAudioClient audioClient, SocketCommandContext context)
 		{
 			var guildId = context.Guild.Id;
-			ConnectedChannels.TryAdd(guildId, audioClient);
+			if (!ConnectedChannels.ContainsKey(guildId))
+			{
+				ConnectedChannels.TryAdd(guildId, audioClient);
+			}
 		}
 
 		public async Task LeaveChannel(SocketCommandContext Context)
@@ -43,36 +47,12 @@ namespace RadioBot.Services
 			}
 		}
 
-		public async Task SendAudioAsync(SocketGuild guild, ISocketMessageChannel channel, string path)
-		{
-			var filePath = "";
-
-			if (ConnectedChannels.TryGetValue(guild.Id, out IAudioClient client))
-			{
-				using (var output = CreateStream(filePath).StandardOutput.BaseStream)
-				using (var stream = client.CreatePCMStream(AudioApplication.Music))
-				{
-					try
-					{
-						await output.CopyToAsync(stream);
-					}
-					catch (Exception)
-					{
-						Console.WriteLine("Closed audio stream");
-					}
-					finally
-					{
-						await stream.FlushAsync();
-					}
-				}
-			}
-		}
-
 		public async Task PlayAsync(string content, SocketCommandContext context)
 		{
 			var guildId = context.Guild.Id;
 			if (ConnectedChannels.TryGetValue(guildId, out IAudioClient client))
 			{
+				// Magic happens here
 				using (var output = CreateStream(content).StandardOutput.BaseStream)
 				using (var stream = client.CreatePCMStream(AudioApplication.Music))
 				{
@@ -80,9 +60,9 @@ namespace RadioBot.Services
 					{
 						await output.CopyToAsync(stream);
 					}
-					catch (Exception)
+					catch (Exception e)
 					{
-						Console.WriteLine("Closed audio stream");
+						Console.WriteLine(new LogMessage(LogSeverity.Error, "RadioService", "Closed audio stream", e));
 					}
 					finally
 					{

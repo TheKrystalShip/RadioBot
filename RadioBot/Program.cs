@@ -29,7 +29,7 @@ namespace RadioBot
 
 			await Client.LoginAsync(TokenType.Bot, Token);
 			await Client.StartAsync();
-			await Client.SetGameAsync("@RadioBot hello");
+			await Client.SetGameAsync("music 🎶");
 
 			await Task.Delay(-1);
 		}

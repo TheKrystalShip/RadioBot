@@ -18,7 +18,10 @@ namespace RadioBot.Handlers
 
 		private async Task Client_Log(LogMessage logMessage)
 		{
-			Console.WriteLine(logMessage);
+			if (!logMessage.Message.Contains("OpCode"))
+			{
+				Console.WriteLine(logMessage);
+			}
 		}
 	}
 }

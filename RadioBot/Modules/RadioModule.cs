@@ -7,16 +7,28 @@ using System.Threading.Tasks;
 
 namespace RadioBot.Modules
 {
+	[RequireUserPermission(GuildPermission.Administrator)]
 	public class RadioModule : ModuleBase<SocketCommandContext>
     {
 		private RadioService RadioService;
 
+		// Dependency injection of RadioService
 		public RadioModule(RadioService radioService) 
 			=> RadioService = radioService;
 
 		[Command("join", RunMode = RunMode.Async)]
 		public async Task JoinVoiceChannelAsync(IVoiceChannel channel = null)
 		{
+			// Am i already in (a || the correct) voice channel?
+			var voiceChannel = (Context.Client.CurrentUser as IGuildUser)?.VoiceChannel;
+
+			if (voiceChannel != null || voiceChannel != channel)
+			{
+				await ReplyAsync("I'm already in a voice channel");
+				return;
+			}
+
+			// Is user requesting in a voice channel?
 			var msg = Context.Message;
 			channel = channel ?? (msg.Author as IGuildUser)?.VoiceChannel;
 
@@ -26,6 +38,7 @@ namespace RadioBot.Modules
 				return; 
 			}
 
+			// Sent request to service
 			var audioClient = await channel.ConnectAsync();
 			await RadioService.JoinChannel(audioClient, Context);
 		}
@@ -42,6 +55,7 @@ namespace RadioBot.Modules
 				return;
 			}
 
+			// Service handles consistency checks on this one
 			await RadioService.LeaveChannel(Context);
 		}
 
@@ -54,6 +68,7 @@ namespace RadioBot.Modules
 				return;
 			}
 
+			// Is user requesting in a voice channel?
 			var msg = Context.Message;
 			IVoiceChannel channel = (msg.Author as IGuildUser)?.VoiceChannel;
 
@@ -63,9 +78,16 @@ namespace RadioBot.Modules
 				return;
 			}
 
-			var audioClient = await channel.ConnectAsync();
-			await RadioService.JoinChannel(audioClient, Context);
+			// Am i already in a voice channel?
+			var voiceChannel = (Context.Client.CurrentUser as IGuildUser)?.VoiceChannel;
 
+			if (voiceChannel is null)
+			{
+				var audioClient = await channel.ConnectAsync();
+				await RadioService.JoinChannel(audioClient, Context);
+			}
+
+			// Send play request to service
 			await RadioService.PlayAsync(content, Context);
 		}
     }
