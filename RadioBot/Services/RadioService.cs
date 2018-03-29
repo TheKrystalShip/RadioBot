@@ -1,15 +1,10 @@
-﻿using Discord;
-using Discord.Audio;
+﻿using Discord.Audio;
 using Discord.Commands;
 using Discord.WebSocket;
 
-using RadioBot.Database.Models;
-
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace RadioBot.Services
@@ -18,13 +13,6 @@ namespace RadioBot.Services
     {
 		private readonly ConcurrentDictionary<ulong, IAudioClient> ConnectedChannels =
 			new ConcurrentDictionary<ulong, IAudioClient>();
-
-		public async Task JoinChannel(IVoiceChannel voiceChannel, SocketCommandContext context)
-		{
-			var guildId = context.Guild.Id;
-			var audioClient = await voiceChannel.ConnectAsync();
-			ConnectedChannels.TryAdd(guildId, audioClient);
-		}
 
 		public async Task JoinChannel(IAudioClient audioClient, SocketCommandContext context)
 		{
@@ -80,6 +68,35 @@ namespace RadioBot.Services
 			}
 		}
 
+		public async Task PlayAsync(string content, SocketCommandContext context)
+		{
+			var guildId = context.Guild.Id;
+			if (ConnectedChannels.TryGetValue(guildId, out IAudioClient client))
+			{
+				using (var output = CreateStream(content).StandardOutput.BaseStream)
+				using (var stream = client.CreatePCMStream(AudioApplication.Music))
+				{
+					try
+					{
+						await output.CopyToAsync(stream);
+					}
+					catch (Exception)
+					{
+						Console.WriteLine("Closed audio stream");
+					}
+					finally
+					{
+						await stream.FlushAsync();
+					}
+				}
+			}
+			else
+			{
+				await context.Channel.SendMessageAsync("Not in voice channel");
+			}
+
+		}
+
 		private Process CreateStream(string path)
 		{
 			return Process.Start(new ProcessStartInfo
@@ -89,11 +106,6 @@ namespace RadioBot.Services
 				UseShellExecute = false,
 				RedirectStandardOutput = true
 			});
-		}
-
-		public async Task<List<Radio>> GetRadioListAsync()
-		{
-			return new List<Radio>();
 		}
 	}
 }

@@ -44,5 +44,29 @@ namespace RadioBot.Modules
 
 			await RadioService.LeaveChannel(Context);
 		}
+
+		[Command("play", RunMode = RunMode.Async)]
+		public async Task PlayAsync([Remainder] string content = null)
+		{
+			if (content is null)
+			{
+				await ReplyAsync("You had one job...");
+				return;
+			}
+
+			var msg = Context.Message;
+			IVoiceChannel channel = (msg.Author as IGuildUser)?.VoiceChannel;
+
+			if (channel is null)
+			{
+				await ReplyAsync("You must be in a voice channel or either specify a channel to join");
+				return;
+			}
+
+			var audioClient = await channel.ConnectAsync();
+			await RadioService.JoinChannel(audioClient, Context);
+
+			await RadioService.PlayAsync(content, Context);
+		}
     }
 }
