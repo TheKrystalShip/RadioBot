@@ -16,7 +16,7 @@ namespace RadioBot.Modules
 		public RadioModule(RadioService radioService) 
 			=> RadioService = radioService;
 
-		[Command("join", RunMode = RunMode.Async)]
+		[Command("join")]
 		public async Task JoinVoiceChannelAsync(IVoiceChannel channel = null)
 		{
 			// Am i already in (a || the correct) voice channel?
@@ -34,7 +34,7 @@ namespace RadioBot.Modules
 
 			if (channel is null)
 			{
-				await ReplyAsync("You must be in a voice channel or either specify a channel to join");
+				await ReplyAsync("You must be in a voice channel");
 				return; 
 			}
 
@@ -43,7 +43,8 @@ namespace RadioBot.Modules
 			await RadioService.JoinChannel(audioClient, Context);
 		}
 
-		[Command("leave", RunMode = RunMode.Async)]
+		[Command("leave")]
+		[Alias("stop")]
 		public async Task LeaveAsync(IVoiceChannel channel = null)
 		{
 			var msg = Context.Message;
@@ -51,15 +52,15 @@ namespace RadioBot.Modules
 
 			if (channel is null)
 			{
-				await ReplyAsync("You must be in a voice channel or either specify a channel to join");
+				await ReplyAsync("You must be in a voice channel");
 				return;
 			}
 
-			// Service handles consistency checks on this one
+			// Service handles checks on this one
 			await RadioService.LeaveChannel(Context);
 		}
 
-		[Command("play", RunMode = RunMode.Async)]
+		[Command("play")]
 		public async Task PlayAsync([Remainder] string content = null)
 		{
 			if (content is null)
@@ -74,7 +75,7 @@ namespace RadioBot.Modules
 
 			if (channel is null)
 			{
-				await ReplyAsync("You must be in a voice channel or either specify a channel to join");
+				await ReplyAsync("You must be in a voice channel");
 				return;
 			}
 
@@ -86,6 +87,10 @@ namespace RadioBot.Modules
 				var audioClient = await channel.ConnectAsync();
 				await RadioService.JoinChannel(audioClient, Context);
 			}
+
+			// Change status to "Playing" whatever the user requested,
+			// just a small detail but it looks really nice
+			await Context.Client.SetGameAsync(content);
 
 			// Send play request to service
 			await RadioService.PlayAsync(content, Context);

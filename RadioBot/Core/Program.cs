@@ -10,9 +10,8 @@ namespace RadioBot
 {
 	public class Program
     {
-		private DiscordSocketClient Client;
 		private string Token;
-
+		private DiscordSocketClient Client;
 		private CommandHandler CommandHanlder;
 		private EventHandler EventHandler;
 
@@ -21,8 +20,14 @@ namespace RadioBot
 
 		private async Task Init()
 		{
-			Client = new DiscordSocketClient();
 			Token = Resources.Token;
+
+			Client = new DiscordSocketClient(new DiscordSocketConfig() {
+				DefaultRetryMode = RetryMode.AlwaysRetry,
+				ConnectionTimeout = 5000,
+				LogLevel = LogSeverity.Debug,
+				AlwaysDownloadUsers = true
+			});
 
 			CommandHanlder = new CommandHandler(Client);
 			EventHandler = new EventHandler(Client);

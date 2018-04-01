@@ -9,11 +9,15 @@ using System.Threading.Tasks;
 
 namespace RadioBot.Services
 {
-	public class RadioService : Service
+	public class RadioService
     {
 		// Stores each guild's audio client
-		private readonly ConcurrentDictionary<ulong, IAudioClient> ConnectedChannels =
-			new ConcurrentDictionary<ulong, IAudioClient>();
+		private readonly ConcurrentDictionary<ulong, IAudioClient> ConnectedChannels;
+
+		public RadioService()
+		{
+			ConnectedChannels = new ConcurrentDictionary<ulong, IAudioClient>();
+		}
 
 		public async Task JoinChannel(IAudioClient audioClient, SocketCommandContext context)
 		{
@@ -24,14 +28,14 @@ namespace RadioBot.Services
 			}
 		}
 
-		public async Task LeaveChannel(SocketCommandContext Context)
+		public async Task LeaveChannel(SocketCommandContext context)
 		{
-			var guildId = Context.Guild.Id;
+			var guildId = context.Guild.Id;
 			ConnectedChannels.TryGetValue(guildId, out IAudioClient audioClient);
 
 			if (audioClient is null)
 			{
-				await Context.Channel.SendMessageAsync("Bot is not connected to any Voice Channels");
+				await context.Channel.SendMessageAsync("Bot is not connected to any Voice Channels");
 				return;
 			}
 
@@ -39,7 +43,7 @@ namespace RadioBot.Services
 			{
 				await audioClient.StopAsync();
 				audioClient.Dispose();
-				ConnectedChannels.TryRemove(Context.Guild.Id, out audioClient);
+				ConnectedChannels.TryRemove(context.Guild.Id, out audioClient);
 			}
 			catch (Exception)
 			{
@@ -62,7 +66,7 @@ namespace RadioBot.Services
 					}
 					catch (Exception e)
 					{
-						Console.WriteLine(new LogMessage(LogSeverity.Error, "RadioService", "Closed audio stream", e));
+						Console.WriteLine(new LogMessage(LogSeverity.Error, "RadioService", "Closed audio stream"));
 					}
 					finally
 					{
@@ -72,9 +76,8 @@ namespace RadioBot.Services
 			}
 			else
 			{
-				await context.Channel.SendMessageAsync("Not in voice channel");
+				Console.WriteLine(new LogMessage(LogSeverity.Error, "RadioService", "Failed to retrieve AudioClient"));
 			}
-
 		}
 
 		private Process CreateStream(string path)

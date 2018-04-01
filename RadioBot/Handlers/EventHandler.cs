@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RadioBot.Handlers
 {
-	public class EventHandler : Handler
+	public class EventHandler
     {
 		private DiscordSocketClient Client;
 

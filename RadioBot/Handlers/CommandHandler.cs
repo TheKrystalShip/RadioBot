@@ -1,4 +1,5 @@
-﻿using Discord.Commands;
+﻿using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace RadioBot.Handlers
 {
-	public class CommandHandler : Handler
+	public class CommandHandler
     {
 		private DiscordSocketClient Client;
 		private CommandService CommandService;
@@ -22,12 +23,17 @@ namespace RadioBot.Handlers
 		{
 			Client = client;
 
-			CommandService = new CommandService();
+			CommandService = new CommandService(new CommandServiceConfig() {
+				CaseSensitiveCommands = false,
+				DefaultRunMode = RunMode.Async,
+				LogLevel = LogSeverity.Debug
+			});
+
 			CommandService.AddModulesAsync(Assembly.GetEntryAssembly());
 
 			ServiceCollection = new ServiceCollection()
-				.AddSingleton(new RadioService())
 				.AddDbContext<DatabaseContext>()
+				.AddSingleton(new RadioService())
 				.BuildServiceProvider();
 
 			Console.Title = "RadioBot";
@@ -52,7 +58,7 @@ namespace RadioBot.Handlers
 
 				if (!result.IsSuccess)
 				{
-					Console.WriteLine(result);
+					Console.WriteLine(new LogMessage(LogSeverity.Error, "Command", result.ErrorReason));
 				}
 			}
 		}

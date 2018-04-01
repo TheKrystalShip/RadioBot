@@ -7,20 +7,35 @@ namespace RadioBot.Database
 {
 	public class DatabaseContext : DbContext
     {
+		private static string ConnectionString = Resources.ConnectionString;
 		public DbSet<Radio> Radios { get; set; }
 
-		protected override void OnConfiguring(DbContextOptionsBuilder ob)
+		public DatabaseContext() : base()
 		{
-			ob.UseSqlServer(Resources.ConnectionString);
+
 		}
 
-		protected override void OnModelCreating(ModelBuilder mb)
+		public DatabaseContext(DbContextOptions options) : base(options)
 		{
-			mb.Entity<User>()
+
+		}
+
+		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+		{
+			base.OnConfiguring(optionsBuilder);
+
+			optionsBuilder.UseSqlServer(ConnectionString);
+		}
+
+		protected override void OnModelCreating(ModelBuilder modelBuilder)
+		{
+			base.OnModelCreating(modelBuilder);
+
+			modelBuilder.Entity<User>()
 				.HasMany(x => x.Radios)
 				.WithOne(x => x.User);
 
-			mb.Entity<Radio>()
+			modelBuilder.Entity<Radio>()
 				.HasOne(x => x.User)
 				.WithMany(x => x.Radios)
 				.OnDelete(DeleteBehavior.SetNull);
