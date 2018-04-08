@@ -40,6 +40,7 @@ namespace RadioBot.Services
 				try
 				{
 					await audioClient.StopAsync();
+					audioClient.Dispose();
 				}
 				catch (Exception)
 				{
@@ -47,6 +48,10 @@ namespace RadioBot.Services
 				}
 
 				AudioClients.TryRemove(context.Guild.Id, out audioClient);
+			}
+			else
+			{
+				await context.Channel.SendMessageAsync("I'm not connected");
 			}
 		}
 

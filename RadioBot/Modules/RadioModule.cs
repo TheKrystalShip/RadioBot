@@ -38,14 +38,6 @@ namespace RadioBot.Modules
 		[Alias("stop")]
 		public async Task LeaveAsync()
 		{
-			IVoiceChannel myVoiceChannel = (Context.Client.CurrentUser as IGuildUser).VoiceChannel;
-
-			if (myVoiceChannel is null)
-			{
-				await ReplyAsync("I'm not connected");
-				return;
-			}
-
 			// Service handles checks on this one
 			await RadioService.LeaveChannel(Context);
 		}
@@ -71,7 +63,7 @@ namespace RadioBot.Modules
 			// Am i already in a voice channel, or in the same channel as the user?
 			IVoiceChannel myVoiceChannel = (Context.Client.CurrentUser as IGuildUser)?.VoiceChannel;
 
-			if (myVoiceChannel is null | myVoiceChannel != userVoiceChannel)
+			if (myVoiceChannel is null || myVoiceChannel != userVoiceChannel)
 			{
 				await RadioService.JoinChannelAsync(userVoiceChannel, Context);
 			}

@@ -4,7 +4,6 @@ using Discord.WebSocket;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using RadioBot.Database;
 using RadioBot.Services;
 
 using System;
@@ -32,7 +31,6 @@ namespace RadioBot.Handlers
 			CommandService.AddModulesAsync(Assembly.GetEntryAssembly());
 
 			ServiceCollection = new ServiceCollection()
-				.AddDbContext<DatabaseContext>()
 				.AddSingleton(new RadioService())
 				.BuildServiceProvider();
 
