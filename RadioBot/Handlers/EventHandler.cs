@@ -20,7 +20,9 @@ namespace RadioBot.Handlers
 		{
 			if (!logMessage.Message.Contains("OpCode"))
 			{
-				Console.WriteLine(logMessage);
+				await Task.Run(() => {
+					Console.WriteLine(logMessage);
+				});
 			}
 		}
 	}

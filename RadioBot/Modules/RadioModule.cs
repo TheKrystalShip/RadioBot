@@ -7,52 +7,42 @@ using System.Threading.Tasks;
 
 namespace RadioBot.Modules
 {
-	[RequireUserPermission(GuildPermission.Administrator)]
 	public class RadioModule : ModuleBase<SocketCommandContext>
     {
 		private RadioService RadioService;
 
 		// Dependency injection of RadioService
-		public RadioModule(RadioService radioService) 
-			=> RadioService = radioService;
+		public RadioModule(RadioService radioService)
+		{
+			RadioService = radioService;
+		}
 
 		[Command("join")]
 		public async Task JoinVoiceChannelAsync(IVoiceChannel channel = null)
 		{
 			// Am i already in (a || the correct) voice channel?
-			var voiceChannel = (Context.Client.CurrentUser as IGuildUser)?.VoiceChannel;
+			IVoiceChannel myVoiceChannel = (Context.Client.CurrentUser as IGuildUser)?.VoiceChannel;
+			IVoiceChannel userVoiceChannel = channel ?? (Context.Message.Author as IGuildUser)?.VoiceChannel;
 
-			if (voiceChannel != null || voiceChannel != channel)
+			if (myVoiceChannel == userVoiceChannel)
 			{
 				await ReplyAsync("I'm already in a voice channel");
 				return;
 			}
 
-			// Is user requesting in a voice channel?
-			var msg = Context.Message;
-			channel = channel ?? (msg.Author as IGuildUser)?.VoiceChannel;
-
-			if (channel is null)
-			{
-				await ReplyAsync("You must be in a voice channel");
-				return; 
-			}
-
 			// Sent request to service
-			var audioClient = await channel.ConnectAsync();
-			await RadioService.JoinChannel(audioClient, Context);
+			await RadioService.JoinChannelAsync(userVoiceChannel, Context);
 		}
 
 		[Command("leave")]
 		[Alias("stop")]
-		public async Task LeaveAsync(IVoiceChannel channel = null)
+		public async Task LeaveAsync()
 		{
-			var msg = Context.Message;
-			channel = channel ?? (msg.Author as IGuildUser)?.VoiceChannel;
+			IVoiceChannel myVoiceChannel = (Context.Client.CurrentUser as IGuildUser).VoiceChannel;
 
-			if (channel is null)
+			if (myVoiceChannel is null)
 			{
-				await ReplyAsync("You must be in a voice channel");
+				await ReplyAsync("I'm not connected");
 				return;
 			}
 
@@ -70,26 +60,23 @@ namespace RadioBot.Modules
 			}
 
 			// Is user requesting in a voice channel?
-			var msg = Context.Message;
-			IVoiceChannel channel = (msg.Author as IGuildUser)?.VoiceChannel;
+			IVoiceChannel userVoiceChannel = (Context.Message.Author as IGuildUser)?.VoiceChannel;
 
-			if (channel is null)
+			if (userVoiceChannel is null)
 			{
 				await ReplyAsync("You must be in a voice channel");
 				return;
 			}
 
-			// Am i already in a voice channel?
-			var voiceChannel = (Context.Client.CurrentUser as IGuildUser)?.VoiceChannel;
+			// Am i already in a voice channel, or in the same channel as the user?
+			IVoiceChannel myVoiceChannel = (Context.Client.CurrentUser as IGuildUser)?.VoiceChannel;
 
-			if (voiceChannel is null)
+			if (myVoiceChannel is null | myVoiceChannel != userVoiceChannel)
 			{
-				var audioClient = await channel.ConnectAsync();
-				await RadioService.JoinChannel(audioClient, Context);
+				await RadioService.JoinChannelAsync(userVoiceChannel, Context);
 			}
 
-			// Change status to "Playing" whatever the user requested,
-			// just a small detail but it looks really nice
+			// Change status to "Playing {content}" whatever the user requested
 			await Context.Client.SetGameAsync(content);
 
 			// Send play request to service

@@ -54,7 +54,7 @@ namespace RadioBot.Handlers
 			if (mention)
 			{
 				SocketCommandContext context = new SocketCommandContext(Client, message);
-				var result = await CommandService.ExecuteAsync(context, argPos, ServiceCollection);
+				IResult result = await CommandService.ExecuteAsync(context, argPos, ServiceCollection);
 
 				if (!result.IsSuccess)
 				{

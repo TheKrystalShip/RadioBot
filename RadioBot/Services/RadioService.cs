@@ -12,65 +12,64 @@ namespace RadioBot.Services
 	public class RadioService
     {
 		// Stores each guild's audio client
-		private readonly ConcurrentDictionary<ulong, IAudioClient> ConnectedChannels;
+		private readonly ConcurrentDictionary<ulong, IAudioClient> AudioClients;
 
 		public RadioService()
 		{
-			ConnectedChannels = new ConcurrentDictionary<ulong, IAudioClient>();
+			AudioClients = new ConcurrentDictionary<ulong, IAudioClient>();
 		}
 
-		public async Task JoinChannel(IAudioClient audioClient, SocketCommandContext context)
+		public async Task JoinChannelAsync(IVoiceChannel channel, SocketCommandContext context)
 		{
+			IAudioClient audioClient = await channel.ConnectAsync();
+
 			var guildId = context.Guild.Id;
-			if (!ConnectedChannels.ContainsKey(guildId))
+
+			if (!AudioClients.ContainsKey(guildId))
 			{
-				ConnectedChannels.TryAdd(guildId, audioClient);
+				AudioClients.TryAdd(guildId, audioClient);
 			}
 		}
 
 		public async Task LeaveChannel(SocketCommandContext context)
 		{
 			var guildId = context.Guild.Id;
-			ConnectedChannels.TryGetValue(guildId, out IAudioClient audioClient);
 
-			if (audioClient is null)
+			if (AudioClients.TryGetValue(guildId, out IAudioClient audioClient))
 			{
-				await context.Channel.SendMessageAsync("Bot is not connected to any Voice Channels");
-				return;
-			}
+				try
+				{
+					await audioClient.StopAsync();
+				}
+				catch (Exception)
+				{
+					Console.WriteLine(new LogMessage(LogSeverity.Info, "RadioService", "Disconnected"));
+				}
 
-			try
-			{
-				await audioClient.StopAsync();
-				audioClient.Dispose();
-				ConnectedChannels.TryRemove(context.Guild.Id, out audioClient);
-			}
-			catch (Exception)
-			{
-				Console.WriteLine("Disconnected");
+				AudioClients.TryRemove(context.Guild.Id, out audioClient);
 			}
 		}
 
 		public async Task PlayAsync(string content, SocketCommandContext context)
 		{
 			var guildId = context.Guild.Id;
-			if (ConnectedChannels.TryGetValue(guildId, out IAudioClient client))
+			if (AudioClients.TryGetValue(guildId, out IAudioClient client))
 			{
 				// Magic happens here
-				using (var output = CreateStream(content).StandardOutput.BaseStream)
-				using (var stream = client.CreatePCMStream(AudioApplication.Music))
+				using (var ffmpegStream = CreateStream(content).StandardOutput.BaseStream)
+				using (var discordOutStream = client.CreatePCMStream(AudioApplication.Music))
 				{
 					try
 					{
-						await output.CopyToAsync(stream);
+						await ffmpegStream.CopyToAsync(discordOutStream);
 					}
-					catch (Exception e)
+					catch (Exception)
 					{
 						Console.WriteLine(new LogMessage(LogSeverity.Error, "RadioService", "Closed audio stream"));
 					}
 					finally
 					{
-						await stream.FlushAsync();
+						await discordOutStream.FlushAsync();
 					}
 				}
 			}
