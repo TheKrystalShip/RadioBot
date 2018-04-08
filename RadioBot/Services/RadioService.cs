@@ -5,6 +5,7 @@ using Discord.Commands;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace RadioBot.Services
@@ -21,12 +22,11 @@ namespace RadioBot.Services
 
 		public async Task JoinChannelAsync(IVoiceChannel channel, SocketCommandContext context)
 		{
-			IAudioClient audioClient = await channel.ConnectAsync();
-
 			var guildId = context.Guild.Id;
 
 			if (!AudioClients.ContainsKey(guildId))
 			{
+				IAudioClient audioClient = await channel.ConnectAsync();
 				AudioClients.TryAdd(guildId, audioClient);
 			}
 		}
@@ -61,8 +61,8 @@ namespace RadioBot.Services
 			if (AudioClients.TryGetValue(guildId, out IAudioClient client))
 			{
 				// Magic happens here
-				using (var ffmpegStream = CreateStream(content).StandardOutput.BaseStream)
-				using (var discordOutStream = client.CreatePCMStream(AudioApplication.Music))
+				using (Stream ffmpegStream = CreateStream(content))
+				using (AudioOutStream discordOutStream = client.CreatePCMStream(AudioApplication.Music))
 				{
 					try
 					{
@@ -84,15 +84,16 @@ namespace RadioBot.Services
 			}
 		}
 
-		private Process CreateStream(string path)
+		private Stream CreateStream(string path)
 		{
-			return Process.Start(new ProcessStartInfo
-			{
-				FileName = "Programs/ffmpeg.exe",
-				Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
-				UseShellExecute = false,
-				RedirectStandardOutput = true
-			});
+			return Process.Start(new ProcessStartInfo()
+				{
+					FileName = "ffmpeg.exe",
+					Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
+					UseShellExecute = false,
+					RedirectStandardOutput = true
+				}
+			).StandardOutput.BaseStream;
 		}
 	}
 }

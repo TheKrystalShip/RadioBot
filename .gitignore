@@ -264,3 +264,4 @@ __pycache__/
 /RadioBot/libsodium.dll
 /RadioBot/Libraries
 /RadioBot/Programs
+/RadioBot/ffmpeg.exe
