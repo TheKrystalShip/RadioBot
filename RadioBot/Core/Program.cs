@@ -10,24 +10,21 @@ namespace RadioBot
 {
 	public class Program
     {
-		private string Token;
-		private DiscordSocketClient Client;
-		private CommandHandler CommandHanlder;
-		private EventHandler EventHandler;
+		private static string Token;
+		private static DiscordSocketClient Client;
+		private static CommandHandler CommandHanlder;
+		private static EventHandler EventHandler;
 
-		static void Main(string[] args)
-			=> new Program().Init().Wait();
-
-		private async Task Init()
+		static async Task Main(string[] args)
 		{
 			Token = Resources.Token;
 
-			Client = new DiscordSocketClient(new DiscordSocketConfig() {
-				DefaultRetryMode = RetryMode.AlwaysRetry,
-				ConnectionTimeout = 5000,
-				LogLevel = LogSeverity.Debug,
-				AlwaysDownloadUsers = true
-			});
+			Client = new DiscordSocketClient(new DiscordSocketConfig()
+				{
+					DefaultRetryMode = RetryMode.AlwaysRetry,
+					ConnectionTimeout = 5000
+				}
+			);
 
 			CommandHanlder = new CommandHandler(Client);
 			EventHandler = new EventHandler(Client);

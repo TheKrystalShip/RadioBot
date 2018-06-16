@@ -44,6 +44,12 @@ namespace RadioBot.Modules
 		[Command("play")]
 		public async Task PlayAsync([Remainder] string content = null)
 		{
+			if (content is null)
+			{
+				await ReplyAsync("You need to tell me something to play");
+				return;
+			}
+
 			// Is user requesting in a voice channel?
 			IVoiceChannel userVoiceChannel = (Context.Message.Author as IGuildUser)?.VoiceChannel;
 

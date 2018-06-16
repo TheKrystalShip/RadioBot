@@ -16,19 +16,20 @@ namespace RadioBot.Handlers
     {
 		private DiscordSocketClient Client;
 		private CommandService CommandService;
-		private IServiceProvider ServiceCollection;
+		private readonly IServiceProvider ServiceCollection;
 
 		public CommandHandler(DiscordSocketClient client)
 		{
 			Client = client;
 
-			CommandService = new CommandService(new CommandServiceConfig() {
-				CaseSensitiveCommands = false,
-				DefaultRunMode = RunMode.Async,
-				LogLevel = LogSeverity.Debug
-			});
+			CommandService = new CommandService(new CommandServiceConfig()
+				{
+					CaseSensitiveCommands = false,
+					DefaultRunMode = RunMode.Async
+				}
+			);
 
-			CommandService.AddModulesAsync(Assembly.GetEntryAssembly());
+			CommandService.AddModulesAsync(Assembly.GetEntryAssembly()).Wait();
 
 			ServiceCollection = new ServiceCollection()
 				.AddSingleton(new RadioService())

@@ -16,14 +16,14 @@ namespace RadioBot.Handlers
 			Client.Log += Client_Log;
 		}
 
-		private async Task Client_Log(LogMessage logMessage)
+		private Task Client_Log(LogMessage logMessage)
 		{
 			if (!logMessage.Message.Contains("OpCode"))
 			{
-				await Task.Run(() => {
-					Console.WriteLine(logMessage);
-				});
+				Console.WriteLine(logMessage);
 			}
+
+			return Task.CompletedTask;
 		}
 	}
 }

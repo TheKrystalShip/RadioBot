@@ -5,7 +5,6 @@ using Discord.Commands;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace RadioBot.Services
@@ -61,11 +60,18 @@ namespace RadioBot.Services
 			if (AudioClients.TryGetValue(guildId, out IAudioClient client))
 			{
 				// Magic happens here
-				using (Stream ffmpegStream = CreateStream(content))
+				using (Process ffmpegProcess = CreateStream(content))
 				using (AudioOutStream discordOutStream = client.CreatePCMStream(AudioApplication.Music))
 				{
 					try
 					{
+						ffmpegProcess.ErrorDataReceived += (sender, args) => {
+							Console.BackgroundColor = ConsoleColor.DarkRed;
+							Console.WriteLine(new LogMessage(LogSeverity.Error, "FFmpeg Process", args.Data));
+							Console.BackgroundColor = ConsoleColor.Black;
+						};
+
+						var ffmpegStream = ffmpegProcess.StandardOutput.BaseStream;
 						await ffmpegStream.CopyToAsync(discordOutStream);
 					}
 					catch (Exception)
@@ -84,16 +90,18 @@ namespace RadioBot.Services
 			}
 		}
 
-		private Stream CreateStream(string path)
+		private Process CreateStream(string path)
 		{
+			string command = $"-hide_banner -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1";
+
 			return Process.Start(new ProcessStartInfo()
 				{
 					FileName = "ffmpeg.exe",
-					Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
+					Arguments = command,
 					UseShellExecute = false,
 					RedirectStandardOutput = true
 				}
-			).StandardOutput.BaseStream;
+			);
 		}
 	}
 }
