@@ -20,7 +20,7 @@ namespace RadioBot.Modules
 		[Command("join")]
 		public async Task JoinVoiceChannelAsync()
 		{
-			// Am i already in (a || the correct) voice channel?
+			// Is user requesting in a voice channel?
 			IVoiceChannel userVoiceChannel = (Context.Message.Author as IGuildUser)?.VoiceChannel;
 
 			if (userVoiceChannel is null)
@@ -59,6 +59,7 @@ namespace RadioBot.Modules
 				return;
 			}
 
+            // Service will only join if not already in the voice channel
 			await RadioService.JoinChannelAsync(userVoiceChannel, Context);
 
 			// Change status to "Playing {content}" whatever the user requested

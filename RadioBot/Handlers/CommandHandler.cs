@@ -42,7 +42,7 @@ namespace RadioBot.Handlers
 
 		private async Task HandleCommands(SocketMessage arg)
 		{
-			var message = arg as SocketUserMessage;
+            SocketUserMessage message = arg as SocketUserMessage;
 
 			if (message is null || message.Author.IsBot)
 				return;

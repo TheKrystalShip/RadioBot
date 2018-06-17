@@ -21,7 +21,7 @@ namespace RadioBot.Services
 
 		public async Task JoinChannelAsync(IVoiceChannel channel, SocketCommandContext context)
 		{
-			var guildId = context.Guild.Id;
+            ulong guildId = context.Guild.Id;
 
 			if (!AudioClients.ContainsKey(guildId))
 			{
@@ -32,7 +32,7 @@ namespace RadioBot.Services
 
 		public async Task LeaveChannel(SocketCommandContext context)
 		{
-			var guildId = context.Guild.Id;
+            ulong guildId = context.Guild.Id;
 
 			if (AudioClients.TryGetValue(guildId, out IAudioClient audioClient))
 			{
@@ -56,7 +56,8 @@ namespace RadioBot.Services
 
 		public async Task PlayAsync(string content, SocketCommandContext context)
 		{
-			var guildId = context.Guild.Id;
+            ulong guildId = context.Guild.Id;
+
 			if (AudioClients.TryGetValue(guildId, out IAudioClient client))
 			{
 				// Magic happens here
