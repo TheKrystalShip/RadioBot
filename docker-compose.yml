@@ -1,9 +1,0 @@
-version: '3'
-
-services:
-  radiobot:
-    image: radiobot
-    container_name: radiobot
-    build:
-      context: .
-      dockerfile: RadioBot/Dockerfile
