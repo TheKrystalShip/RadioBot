@@ -65,11 +65,11 @@ namespace TheKrystalShip.RadioBot.Core.Services
 
             _audioPlayer.Stop();
 
-            await _context.Channel.SendMessageAsync("Disconnected from voice channel");
-
             _audioClients.TryRemove(_context.Guild.Id, out client);
             await client?.StopAsync();
             client?.Dispose();
+
+            await _context.Channel.SendMessageAsync("Disconnected from voice channel");
         }
 
         public async Task PlayAsync(string content)

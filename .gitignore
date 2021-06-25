@@ -260,9 +260,4 @@ paket-files/
 __pycache__/
 *.pyc
 /RadioBot/Properties/settings.json
-/RadioBot/opus.dll
-/RadioBot/libsodium.dll
-/RadioBot/ffmpeg.exe
-/RadioBot/youtube-dl.exe
-/RadioBot/Programs
 /RadioBot/Properties/secrets.json

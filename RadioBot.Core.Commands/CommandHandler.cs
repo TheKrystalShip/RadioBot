@@ -29,21 +29,15 @@ namespace TheKrystalShip.RadioBot.Core.Commands
         {
             _logger = new Logger<CommandHandler>();
 
-            AddModulesAsync(Assembly.GetAssembly(typeof(Modules.Module))).Wait();
+            AddModulesAsync(Assembly.GetAssembly(typeof(Modules.Module)), Container.GetServiceProvider()).Wait();
 
             Log += OnLogAsync;
-            CommandExecuted += OnCommandExecutedAsync;
         }
 
         public void SetClient(DiscordSocketClient client)
         {
             _client = client;
             _client.Log += OnLogAsync;
-        }
-
-        private async Task OnCommandExecutedAsync(CommandInfo command, ICommandContext context, IResult result)
-        {
-            await Task.CompletedTask;
         }
 
         public Task OnLogAsync(LogMessage message)
@@ -64,7 +58,7 @@ namespace TheKrystalShip.RadioBot.Core.Commands
             return Task.CompletedTask;
         }
 
-        public async Task OnClientMessageRecievedAsync(SocketMessage socketMessage)
+        public async Task OnClientMessageReceivedAsync(SocketMessage socketMessage)
         {
             SocketUserMessage message = socketMessage as SocketUserMessage;
 

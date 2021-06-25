@@ -10,8 +10,8 @@ namespace TheKrystalShip.RadioBot
         {
             await BotBuilder
                 .UseStartup<Startup>()
-                .ConfigureCommands()
                 .ConfigureServices()
+                .ConfigureCommands()
                 .ConfigureClient()
                 .InitAsync();
         }
