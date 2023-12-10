@@ -7,18 +7,16 @@ namespace TheKrystalShip.RadioBot.Tools
 {
     public static class Configuration
     {
-        private static readonly string _settingsFile = Path.Combine("Properties", "settings.json");
+        private const string SETTINGS_FILE = "appsettings.json";
         private static readonly IConfiguration _config;
 
         static Configuration()
         {
-            Directory.CreateDirectory("Properties");
-
-            if (!File.Exists(_settingsFile))
-                File.Create(_settingsFile);
+            if (!File.Exists(SETTINGS_FILE))
+                File.Create(SETTINGS_FILE);
 
             _config = new ConfigurationBuilder()
-                    .AddJsonFile(_settingsFile, optional: false, reloadOnChange: true)
+                    .AddJsonFile(SETTINGS_FILE, optional: false, reloadOnChange: true)
                     .Build();
         }
 
