@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 using TheKrystalShip.Logging;
@@ -10,51 +11,60 @@ using TheKrystalShip.RadioBot.Tools;
 
 namespace TheKrystalShip.RadioBot.Core.Services
 {
-    public class AudioPlayer
+    public class AudioPlayer : IDisposable
     {
         public bool IsRunning { get; private set; } = false;
         public bool IsPlaying { get; private set; } = false;
         public float Volume { get; set; } = 1.0f;
-        public Process Process { get; private set; } = null;
-        public Stream Stream { get; private set; } = null;
+        public Process AudioProcess { get; private set; } = null;
+        public Stream DiscordAudioStream { get; private set; } = null;
+        private CancellationToken _cancellationToken;
 
         private readonly ILogger<AudioPlayer> _logger;
         private readonly int _blockSize = 3840;
 
-        public AudioPlayer()
+        public AudioPlayer(CancellationToken cancellationToken)
         {
             _logger = new Logger<AudioPlayer>();
+            _logger.LogInformation($"Created {GetType().Name}");
+
+            _cancellationToken = cancellationToken;
         }
 
-        public async Task PlayAsync(IAudioClient client, string query)
+        public void ResetCancellationToken(CancellationToken token)
         {
-            IsRunning = true;
-            Process = CreateStream(query);
-            Stream = client.CreatePCMStream(AudioApplication.Music);
+            _cancellationToken = token;
+        }
+
+        public async Task PlayAsync(IAudioClient audioClient, string searchQuery)
+        {
+            AudioProcess = CreateAudioProcess(searchQuery);
+            DiscordAudioStream = audioClient.CreatePCMStream(AudioApplication.Music);
             IsPlaying = true;
 
-            while (true)
+            while (!_cancellationToken.IsCancellationRequested)
             {
-                if (Process is null || Process.HasExited)
+                if (AudioProcess is null || AudioProcess.HasExited)
                     break;
 
-                if (Stream is null)
+                if (DiscordAudioStream is null)
                     break;
 
+                // Pause & Resume commands
                 if (!IsPlaying)
                     continue;
 
                 int blockSize = _blockSize;
                 byte[] buffer = new byte[blockSize];
                 int byteCount;
-                byteCount = await Process.StandardOutput.BaseStream.ReadAsync(buffer, 0, blockSize);
+                byteCount = await AudioProcess.StandardOutput.BaseStream.ReadAsync(buffer.AsMemory(0, blockSize));
 
                 if (byteCount <= 0)
                     break;
 
                 try
                 {
-                    await Stream.WriteAsync(ScaleVolumeSafeAllocateBuffers(buffer, Volume), 0, byteCount);
+                    await DiscordAudioStream.WriteAsync(ScaleVolumeSafeAllocateBuffers(buffer, Volume).AsMemory(0, byteCount));
                 }
                 catch (Exception e)
                 {
@@ -65,31 +75,19 @@ namespace TheKrystalShip.RadioBot.Core.Services
 
             try
             {
-                if (Process != null && !Process.HasExited)
-                {
-                    Process.Kill();
-                    Process.WaitForExit();
-                }
+                AudioProcess?.Kill();
+                AudioProcess?.WaitForExit();
+                DiscordAudioStream?.Flush();
+                DiscordAudioStream?.Dispose();
             }
             catch (Exception e)
             {
                 _logger.LogError(e);
             }
 
-            try
-            {
-                if (Stream != null)
-                    Stream.FlushAsync().Wait();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e);
-            }
-
-            Process = null;
-            Stream = null;
+            AudioProcess = null;
+            DiscordAudioStream = null;
             IsPlaying = false;
-            IsRunning = false;
         }
 
         private byte[] ScaleVolumeSafeAllocateBuffers(byte[] audioSamples, float volume)
@@ -133,30 +131,30 @@ namespace TheKrystalShip.RadioBot.Core.Services
             }
         }
 
-        private Process CreateStream(string query)
+        private Process CreateAudioProcess(string query)
         {
             if (Configuration.OsIsWindows())
             {
                 return Process.Start(new ProcessStartInfo()
-                    {
-                        FileName = "cmd.exe",
-                        Arguments = $"/C youtube-dl.exe --default-search ytsearch -o - \"{query}\" | ffmpeg -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        CreateNoWindow = true
-                    }
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/C youtube-dl.exe --default-search ytsearch -o - \"{query}\" | ffmpeg -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                }
                 );
             }
 
             // Linux command
             return Process.Start(new ProcessStartInfo()
-                {
-                    FileName = "init_audio_stream.sh",
-                    Arguments = query,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                }
+            {
+                FileName = "init_audio_stream.sh",
+                Arguments = query,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            }
             );
         }
 
@@ -184,12 +182,12 @@ namespace TheKrystalShip.RadioBot.Core.Services
             IsPlaying = true;
         }
 
-        public void Stop()
+        public void Dispose()
         {
-            if (Process != null)
-            {
-                Process.Kill();
-            }
+            IsPlaying = false;
+            IsRunning = false;
+            AudioProcess.Dispose();
+            DiscordAudioStream.Dispose();
         }
     }
 }

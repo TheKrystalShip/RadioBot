@@ -18,14 +18,14 @@ namespace TheKrystalShip.RadioBot.Core.Modules
                 return;
             }
 
-            await Service.JoinChannelAsync(userVoiceChannel);
+            await RadioService.JoinChannelAsync(userVoiceChannel);
         }
 
         [Command("leave")]
         [Alias("stop", "fuck off")]
         public async Task LeaveAsync()
         {
-            await Service.LeaveChannelAsync();
+            await RadioService.LeaveChannelAsync();
         }
 
         [Command("play")]
@@ -48,8 +48,8 @@ namespace TheKrystalShip.RadioBot.Core.Modules
             IUserMessage message = Context.Message;
             await message.AddReactionAsync(new Emoji("\u25B6"));
 
-            await Service.JoinChannelAsync(userVoiceChannel);
-            await Service.PlayAsync(content);
+            await RadioService.JoinChannelAsync(userVoiceChannel);
+            await RadioService.PlayAsync(content);
         }
 
         [Command("pause")]
@@ -58,7 +58,7 @@ namespace TheKrystalShip.RadioBot.Core.Modules
             IUserMessage message = Context.Message;
             await message.AddReactionAsync(new Emoji("\u23F8"));
 
-            Service.Pause();
+            RadioService.Pause();
         }
 
         [Command("resume")]
@@ -68,7 +68,7 @@ namespace TheKrystalShip.RadioBot.Core.Modules
             IUserMessage message = Context.Message;
             await message.AddReactionAsync(new Emoji("\u25B6"));
 
-            Service.Resume();
+            RadioService.Resume();
         }
 
         [Command("volume")]
@@ -77,7 +77,7 @@ namespace TheKrystalShip.RadioBot.Core.Modules
             IUserMessage message = Context.Message;
             await message.AddReactionAsync(new Emoji("👍🏻"));
 
-            Service.SetVolume(volume / 100);
+            RadioService.SetVolume(volume / 100);
         }
     }
 }

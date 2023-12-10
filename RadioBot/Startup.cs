@@ -25,7 +25,6 @@ namespace TheKrystalShip.RadioBot
 
         public Startup ConfigureServices()
         {
-            Container.Add<AudioPlayer>();
             Container.Add<IRadioService, RadioService>();
 
             return this;
