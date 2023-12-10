@@ -1,19 +1,20 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.IO;
+﻿using System.IO;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Configuration;
 
 namespace TheKrystalShip.RadioBot.Tools
 {
-    public static class Configuration
+    public static class AppSettings
     {
         private const string SETTINGS_FILE = "appsettings.json";
         private static readonly IConfiguration _config;
 
-        static Configuration()
+        static AppSettings()
         {
             if (!File.Exists(SETTINGS_FILE))
-                File.Create(SETTINGS_FILE);
+            {
+                throw new FileNotFoundException($"File '{SETTINGS_FILE}' could not be found");
+            }
 
             _config = new ConfigurationBuilder()
                     .AddJsonFile(SETTINGS_FILE, optional: false, reloadOnChange: true)
@@ -33,5 +34,5 @@ namespace TheKrystalShip.RadioBot.Tools
 
         public static bool OsIsLinux() =>
             RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-        }
+    }
 }

@@ -1,23 +1,17 @@
-﻿using System.Threading.Tasks;
-
-using TheKrystalShip.DependencyInjection;
-using TheKrystalShip.RadioBot.Core;
+﻿using TheKrystalShip.RadioBot.Core;
+using TheKrystalShip.RadioBot.Tools;
 using TheKrystalShip.RadioBot.Core.Commands;
 using TheKrystalShip.RadioBot.Core.Services;
-using TheKrystalShip.RadioBot.Tools;
+using TheKrystalShip.DependencyInjection;
 
 namespace TheKrystalShip.RadioBot
 {
     public class Startup
     {
-        public Startup()
-        {
-
-        }
-
         public Startup ConfigureCommands()
         {
             Container.Add<CommandHandler>();
+            // Call to instantiate
             Container.Get<CommandHandler>();
 
             return this;
@@ -34,7 +28,7 @@ namespace TheKrystalShip.RadioBot
         {
             Bot client = new Bot();
 
-            client.InitAsync(Configuration.Get("bot:token")).Wait();
+            client.InitAsync(AppSettings.Get("bot:token")).Wait();
 
             return this;
         }

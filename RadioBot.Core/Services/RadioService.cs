@@ -72,9 +72,20 @@ namespace TheKrystalShip.RadioBot.Core.Services
                 return;
             }
 
+            // If there's something playing, we gotta stop the existing AudioPlayer and create a new one
             if (guildAudioConnection.AudioPlayer.IsPlaying)
             {
+                // Save the DiscordAudioClient instance from being disposed
+                IAudioClient audioClient = guildAudioConnection.DiscordAudioClient;
+
+                // Stop & Dispose of existing AudioPlayer
                 Stop();
+
+                // Create a new AudioPlayer but keep existing DiscordAudioClient
+                if (!_guildAudioConnections.TryAdd(guildId, new GuildAudioConnection(audioClient)))
+                {
+                    _logger.LogError("Failed to add new AudioClient");
+                }
             }
 
             await guildAudioConnection.AudioPlayer.PlayAsync(guildAudioConnection.DiscordAudioClient, content);

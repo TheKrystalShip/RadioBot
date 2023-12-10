@@ -12,7 +12,13 @@ namespace TheKrystalShip.RadioBot.Core
     {
         private readonly CommandHandler _commandHandler;
 
-        public Bot() : this(new DiscordSocketConfig() {LogLevel = LogSeverity.Info, DefaultRetryMode = RetryMode.AlwaysRetry})
+        private static readonly DiscordSocketConfig __defaultDiscordSocketConfig = new()
+        {
+            LogLevel = LogSeverity.Info,
+            DefaultRetryMode = RetryMode.Retry502
+        };
+
+        public Bot() : this(__defaultDiscordSocketConfig)
         {
 
         }

@@ -26,7 +26,7 @@ namespace TheKrystalShip.RadioBot.Core.Services
         {
             CancellationTokenSource.Cancel(true);
             CancellationTokenSource.Dispose();
-            DiscordAudioClient.Dispose();
+            // DiscordAudioClient.Dispose();
             AudioPlayer.Dispose();
         }
     }

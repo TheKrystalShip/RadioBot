@@ -15,12 +15,14 @@ namespace TheKrystalShip.RadioBot.Core.Commands
         private readonly ILogger<CommandHandler> _logger;
         private DiscordSocketClient _client;
 
-        public CommandHandler() : this(new CommandServiceConfig()
+        private static readonly CommandServiceConfig __defaultCommandServiceConfig = new()
         {
             LogLevel = LogSeverity.Info,
             CaseSensitiveCommands = false,
             DefaultRunMode = RunMode.Async
-        })
+        };
+
+        public CommandHandler() : this(__defaultCommandServiceConfig)
         {
 
         }

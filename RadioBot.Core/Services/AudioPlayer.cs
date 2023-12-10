@@ -2,7 +2,6 @@
 
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,7 +35,7 @@ namespace TheKrystalShip.RadioBot.Core.Services
         {
             AudioProcess = CreateAudioProcess(searchQuery);
 
-            AudioProcess.Exited += (_, _) => _logger.LogInformation($"Process {AudioProcess.Id} exited.");
+            AudioProcess.Exited += (_, _) => _logger.LogInformation($"AudioProcess {AudioProcess.Id} exited.");
 
             DiscordAudioStream = audioClient.CreatePCMStream(AudioApplication.Music);
             IsPlaying = true;
@@ -138,7 +137,7 @@ namespace TheKrystalShip.RadioBot.Core.Services
 
         private Process CreateAudioProcess(string query)
         {
-            string extension = Configuration.OsIsWindows() ? ".bat" : ".sh";
+            string extension = AppSettings.OsIsWindows() ? ".bat" : ".sh";
 
             return Process.Start(new ProcessStartInfo()
             {
