@@ -15,7 +15,7 @@ namespace TheKrystalShip.RadioBot.Core.Services
     {
         public bool IsRunning { get; private set; } = false;
         public bool IsPlaying { get; private set; } = false;
-        public float Volume { get; set; } = 1.0f;
+        public float Volume { get; set; } = 0.25f;
         public Process AudioProcess { get; private set; } = null;
         public Stream DiscordAudioStream { get; private set; } = null;
         private CancellationToken _cancellationToken;
@@ -138,7 +138,7 @@ namespace TheKrystalShip.RadioBot.Core.Services
                 return Process.Start(new ProcessStartInfo()
                 {
                     FileName = "cmd.exe",
-                    Arguments = $"/C youtube-dl.exe --default-search ytsearch -o - \"{query}\" | ffmpeg -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
+                    Arguments = $"/C yt-dlp.exe --default-search ytsearch -o - \"{query}\" | ffmpeg -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true

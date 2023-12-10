@@ -34,7 +34,7 @@ namespace TheKrystalShip.RadioBot
         {
             Bot client = new Bot();
 
-            client.InitAsync(Configuration.Get("Bot:Token")).Wait();
+            client.InitAsync(Configuration.Get("bot:token")).Wait();
 
             return this;
         }

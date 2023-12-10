@@ -14,4 +14,4 @@ Or [here](https://dsharpplus.github.io/natives/index.html) if the download link 
 
 > On Windows, rename `libopus.dll` to `opus.dll`.
 
-Audio downloading & encoding are handled by [youtube-dl](https://rg3.github.io/youtube-dl/) and [ffmpeg](https://www.ffmpeg.org/).
+Audio downloading & encoding are handled by [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [ffmpeg](https://www.ffmpeg.org/).

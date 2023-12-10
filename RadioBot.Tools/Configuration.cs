@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
-
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -22,6 +22,9 @@ namespace TheKrystalShip.RadioBot.Tools
 
         public static string Get(string key)
         {
+            string value = _config[key];
+            Console.WriteLine(value);
+
             return _config[key];
         }
 
