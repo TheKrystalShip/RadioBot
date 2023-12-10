@@ -13,12 +13,13 @@ namespace TheKrystalShip.RadioBot.Core.Services
 {
     public class AudioPlayer : IDisposable
     {
-        public bool IsRunning { get; private set; } = false;
         public bool IsPlaying { get; private set; } = false;
-        public float Volume { get; set; } = 0.25f;
+        public float Volume { get; set; } = 0.25f; // Min/Max: 0.0f / 1.0f. Default: 0.25f
+
         public Process AudioProcess { get; private set; } = null;
-        public Stream DiscordAudioStream { get; private set; } = null;
-        private CancellationToken _cancellationToken;
+        public AudioOutStream DiscordAudioStream { get; private set; } = null;
+
+        private readonly CancellationToken _cancellationToken;
 
         private readonly ILogger<AudioPlayer> _logger;
         private readonly int _blockSize = 3840;
@@ -31,14 +32,12 @@ namespace TheKrystalShip.RadioBot.Core.Services
             _cancellationToken = cancellationToken;
         }
 
-        public void ResetCancellationToken(CancellationToken token)
-        {
-            _cancellationToken = token;
-        }
-
         public async Task PlayAsync(IAudioClient audioClient, string searchQuery)
         {
             AudioProcess = CreateAudioProcess(searchQuery);
+
+            AudioProcess.Exited += (_, _) => _logger.LogInformation($"Process {AudioProcess.Id} exited.");
+
             DiscordAudioStream = audioClient.CreatePCMStream(AudioApplication.Music);
             IsPlaying = true;
 
@@ -57,14 +56,16 @@ namespace TheKrystalShip.RadioBot.Core.Services
                 int blockSize = _blockSize;
                 byte[] buffer = new byte[blockSize];
                 int byteCount;
-                byteCount = await AudioProcess.StandardOutput.BaseStream.ReadAsync(buffer.AsMemory(0, blockSize));
+                byteCount = await AudioProcess.StandardOutput.BaseStream.ReadAsync(buffer.AsMemory(0, blockSize), _cancellationToken);
 
                 if (byteCount <= 0)
+                {
                     break;
+                }
 
                 try
                 {
-                    await DiscordAudioStream.WriteAsync(ScaleVolumeSafeAllocateBuffers(buffer, Volume).AsMemory(0, byteCount));
+                    await DiscordAudioStream.WriteAsync(ScaleVolumeSafeAllocateBuffers(buffer, Volume).AsMemory(0, byteCount), _cancellationToken);
                 }
                 catch (Exception e)
                 {
@@ -75,7 +76,8 @@ namespace TheKrystalShip.RadioBot.Core.Services
 
             try
             {
-                AudioProcess?.Kill();
+                AudioProcess?.Close();
+                // AudioProcess?.Kill();
                 AudioProcess?.WaitForExit();
                 DiscordAudioStream?.Flush();
                 DiscordAudioStream?.Dispose();
@@ -90,15 +92,18 @@ namespace TheKrystalShip.RadioBot.Core.Services
             IsPlaying = false;
         }
 
+        /// <summary>
+        /// Adjust playback volume
+        /// </summary>
+        /// <param name="audioSamples"></param>
+        /// <param name="volume"></param>
+        /// <returns></returns>
         private byte[] ScaleVolumeSafeAllocateBuffers(byte[] audioSamples, float volume)
         {
             if (audioSamples == null)
                 return null;
 
             if (audioSamples.Length % 2 != 0)
-                return null;
-
-            if (volume < 0.0f || volume > 1.0f)
                 return null;
 
             byte[] output = new byte[audioSamples.Length];
@@ -146,8 +151,14 @@ namespace TheKrystalShip.RadioBot.Core.Services
             );
         }
 
+        /// <summary>
+        /// Value between 0 and 100
+        /// </summary>
+        /// <param name="volume">Volume between 0 to 100</param>
         public void SetVolume(float volume)
         {
+            volume /= 100;
+
             if (volume < 0.0f)
             {
                 volume = 0.0f;
@@ -160,20 +171,28 @@ namespace TheKrystalShip.RadioBot.Core.Services
             Volume = volume;
         }
 
+        /// <summary>
+        /// Pauses audio playback
+        /// </summary>
         public void Pause()
         {
             IsPlaying = false;
         }
 
+        /// <summary>
+        /// Resumes audio playback
+        /// </summary>
         public void Resume()
         {
             IsPlaying = true;
         }
 
+        /// <summary>
+        /// Dispose of the AudioProcess and the DiscordAudioStream
+        /// </summary>
         public void Dispose()
         {
             IsPlaying = false;
-            IsRunning = false;
             AudioProcess?.Dispose();
             DiscordAudioStream?.Dispose();
         }

@@ -77,7 +77,7 @@ namespace TheKrystalShip.RadioBot.Core.Modules
             IUserMessage message = Context.Message;
             await message.AddReactionAsync(new Emoji("👍🏻"));
 
-            RadioService.SetVolume(volume / 100);
+            RadioService.SetVolume(volume);
         }
     }
 }
