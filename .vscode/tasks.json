@@ -5,21 +5,21 @@
       "label": "build",
       "command": "dotnet",
       "type": "process",
-      "args": ["build", "${workspaceFolder}/RadioBot/RadioBot.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
+      "args": ["build", "${workspaceFolder}/RadioBot.sln", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary;ForceNoAlign"],
       "problemMatcher": "$msCompile"
     },
     {
       "label": "publish",
       "command": "dotnet",
       "type": "process",
-      "args": ["publish", "${workspaceFolder}/RadioBot/RadioBot.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
+      "args": ["publish", "${workspaceFolder}/RadioBot.sln", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary;ForceNoAlign"],
       "problemMatcher": "$msCompile"
     },
     {
       "label": "watch",
       "command": "dotnet",
       "type": "process",
-      "args": ["watch", "run", "${workspaceFolder}/RadioBot/RadioBot.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
+      "args": ["watch", "run", "--project", "${workspaceFolder}/RadioBot.sln"],
       "problemMatcher": "$msCompile"
     }
   ]

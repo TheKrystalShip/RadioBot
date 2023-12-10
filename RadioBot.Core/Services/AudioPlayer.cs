@@ -133,23 +133,11 @@ namespace TheKrystalShip.RadioBot.Core.Services
 
         private Process CreateAudioProcess(string query)
         {
-            if (Configuration.OsIsWindows())
-            {
-                return Process.Start(new ProcessStartInfo()
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/C yt-dlp.exe --default-search ytsearch -o - \"{query}\" | ffmpeg -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                }
-                );
-            }
+            string extension = Configuration.OsIsWindows() ? ".bat" : ".sh";
 
-            // Linux command
             return Process.Start(new ProcessStartInfo()
             {
-                FileName = "init_audio_stream.sh",
+                FileName = string.Concat("init_audio_stream", extension),
                 Arguments = query,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -186,8 +174,8 @@ namespace TheKrystalShip.RadioBot.Core.Services
         {
             IsPlaying = false;
             IsRunning = false;
-            AudioProcess.Dispose();
-            DiscordAudioStream.Dispose();
+            AudioProcess?.Dispose();
+            DiscordAudioStream?.Dispose();
         }
     }
 }
