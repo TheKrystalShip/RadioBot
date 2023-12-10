@@ -6,6 +6,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using TheKrystalShip.Logging;
+using TheKrystalShip.RadioBot.Tools;
 
 namespace TheKrystalShip.RadioBot.Core.Services
 {
@@ -16,7 +17,7 @@ namespace TheKrystalShip.RadioBot.Core.Services
         public float Volume { get; set; } = 1.0f;
         public Process Process { get; private set; } = null;
         public Stream Stream { get; private set; } = null;
-        
+
         private readonly ILogger<AudioPlayer> _logger;
         private readonly int _blockSize = 3840;
 
@@ -134,10 +135,24 @@ namespace TheKrystalShip.RadioBot.Core.Services
 
         private Process CreateStream(string query)
         {
+            if (Configuration.OsIsWindows())
+            {
+                return Process.Start(new ProcessStartInfo()
+                    {
+                        FileName = "cmd.exe",
+                        Arguments = $"/C youtube-dl.exe --default-search ytsearch -o - \"{query}\" | ffmpeg -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true
+                    }
+                );
+            }
+
+            // Linux command
             return Process.Start(new ProcessStartInfo()
                 {
-                    FileName = "cmd.exe",
-                    Arguments = $"/C youtube-dl.exe --default-search ytsearch -o - \"{query}\" | ffmpeg -i pipe:0 -ac 2 -f s16le -ar 48000 pipe:1",
+                    FileName = "init_audio_stream.sh",
+                    Arguments = query,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true

@@ -1,4 +1,4 @@
-﻿namespace RadioBot.Core
+﻿namespace TheKrystalShip.RadioBot.Core
 {
     public static class BotBuilder
     {

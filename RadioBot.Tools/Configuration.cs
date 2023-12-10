@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace TheKrystalShip.RadioBot.Tools
 {
@@ -25,5 +26,14 @@ namespace TheKrystalShip.RadioBot.Tools
         {
             return _config[key];
         }
-    }
+
+        public static bool OsIsWindows() =>
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+        public static bool OsIsMac() =>
+            RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+
+        public static bool OsIsLinux() =>
+            RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+        }
 }

@@ -5,15 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core (console)",
-            "type": "coreclr",
+            "name": "C#: Radiobot Debug",
+            "type": "dotnet",
             "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/RadioBot/bin/Debug/netcoreapp2.1/TheKrystalShip.RadioBot.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/RadioBot",
-            "console": "internalConsole",
-            "stopAtEntry": false
+            "projectPath": "${workspaceFolder}/RadioBot/RadioBot.csproj"
         }
     ]
 }

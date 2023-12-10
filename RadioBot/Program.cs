@@ -1,4 +1,4 @@
-﻿using RadioBot.Core;
+﻿using TheKrystalShip.RadioBot.Core;
 
 using System.Threading.Tasks;
 
