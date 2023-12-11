@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using Discord.Audio;
 
-namespace TheKrystalShip.RadioBot.Core.Services
+namespace TheKrystalShip.RadioBot.Core
 {
     public class GuildAudioConnection : IDisposable
     {

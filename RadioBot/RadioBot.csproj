@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RadioBot.Core\RadioBot.Core.csproj" />
-    <ProjectReference Include="..\RadioBot.Tools\RadioBot.Tools.csproj" />
   </ItemGroup>
 
   <ItemGroup>

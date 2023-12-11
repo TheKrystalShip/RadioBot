@@ -1,18 +1,19 @@
 ﻿using Discord;
 using Discord.Audio;
-using Discord.Commands;
-
+using Discord.WebSocket;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 using TheKrystalShip.Logging;
 
-namespace TheKrystalShip.RadioBot.Core.Services
+namespace TheKrystalShip.RadioBot.Core
 {
-    public class RadioService : IRadioService
+    public class RadioService
     {
-        private SocketCommandContext _context;
+        private SocketSlashCommand _commandContext;
 
         private readonly ConcurrentDictionary<ulong, GuildAudioConnection> _guildAudioConnections;
         private readonly ILogger<RadioService> _logger;
@@ -25,51 +26,63 @@ namespace TheKrystalShip.RadioBot.Core.Services
             _logger.LogInformation($"Started {GetType().Name}");
         }
 
-        public void SetContext(SocketCommandContext context)
+        public void SetContext(SocketSlashCommand command)
         {
-            _context = context;
+            _commandContext = command;
         }
 
-        public async Task JoinChannelAsync(IVoiceChannel channel)
+        public async Task HandleJoinCommandAsync()
         {
-            ulong guildId = _context.Guild.Id;
+            IVoiceChannel userVoiceChannel = (_commandContext.User as IGuildUser)?.VoiceChannel;
+
+            if (userVoiceChannel is null)
+            {
+                await _commandContext.RespondAsync("You're not in a voice channel");
+                return;
+            }
+
+            ulong guildId = (ulong) _commandContext.GuildId;
 
             if (!_guildAudioConnections.ContainsKey(guildId))
             {
-                IAudioClient audioClient = await channel.ConnectAsync();
+                IAudioClient audioClient = await userVoiceChannel.ConnectAsync();
                 GuildAudioConnection guildAudioConnection = new GuildAudioConnection(audioClient);
 
                 _guildAudioConnections.TryAdd(guildId, guildAudioConnection);
 
-                _logger.LogInformation($"Connected to {channel.Name}");
+                _logger.LogInformation($"Connected to {userVoiceChannel.Name}");
+            }
+            else
+            {
+                _logger.LogError($"_guildAudioConnections already contains a key entry for guild {guildId}");
             }
         }
 
-        public async Task LeaveChannelAsync()
+        public async Task HandlePlayCommandAsync()
         {
-            ulong guildId = _context.Guild.Id;
+            ulong guildId = (ulong) _commandContext.GuildId;
+            string content = _commandContext.Data.Options.First().ToString() ?? string.Empty;
 
-            if (!_guildAudioConnections.TryGetValue(guildId, out GuildAudioConnection guildAudioConnection))
+            if (content == string.Empty)
             {
-                await _context.Channel.SendMessageAsync("I'm not connected ya dumbfuck");
-            }
-
-            _guildAudioConnections.TryRemove(new KeyValuePair<ulong, GuildAudioConnection>(guildId, guildAudioConnection));
-
-            await guildAudioConnection.DiscordAudioClient?.StopAsync();
-            guildAudioConnection.Dispose();
-
-            await _context.Channel.SendMessageAsync("Disconnected from voice channel");
-        }
-
-        public async Task PlayAsync(string content)
-        {
-            ulong guildId = _context.Guild.Id;
-
-            if (!_guildAudioConnections.TryGetValue(guildId, out GuildAudioConnection guildAudioConnection))
-            {
-                _logger.LogError("Failed to retrieve audio client");
+                await _commandContext.RespondAsync("Please specify a song name");
                 return;
+            }
+
+            if (!_guildAudioConnections.TryGetValue(guildId, out GuildAudioConnection guildAudioConnection))
+            {
+                _logger.LogError("Failed to retrieve audio client, maybe not in voice channel");
+
+                _logger.LogInformation("Trying to join voice channel...");
+                await HandleJoinCommandAsync();
+
+                // Try again to get the audio client after joining
+                if (!_guildAudioConnections.TryGetValue(guildId, out guildAudioConnection))
+                {
+                    _logger.LogError("Failed to retrieve audio client, maybe not in voice channel");
+                    await _commandContext.RespondAsync("Failed to retrieve audio client");
+                    return;
+                }
             }
 
             // If there's something playing, we gotta stop the existing AudioPlayer and create a new one
@@ -79,7 +92,7 @@ namespace TheKrystalShip.RadioBot.Core.Services
                 IAudioClient audioClient = guildAudioConnection.DiscordAudioClient;
 
                 // Stop & Dispose of existing AudioPlayer
-                Stop();
+                await HandleStopCommandAsync();
 
                 // Create a new AudioPlayer but keep existing DiscordAudioClient
                 if (!_guildAudioConnections.TryAdd(guildId, new GuildAudioConnection(audioClient)))
@@ -90,7 +103,7 @@ namespace TheKrystalShip.RadioBot.Core.Services
 
             await guildAudioConnection.AudioPlayer.PlayAsync(guildAudioConnection.DiscordAudioClient, content);
 
-            await _context.Channel.SendMessageAsync("Finished queue");
+            await _commandContext.RespondAsync("Finished queue");
 
             if (_guildAudioConnections.TryRemove(guildId, out guildAudioConnection))
             {
@@ -99,36 +112,65 @@ namespace TheKrystalShip.RadioBot.Core.Services
             }
         }
 
-        public void Pause()
+        public async Task HandlePauseCommandAsync()
         {
-            if (_guildAudioConnections.TryGetValue(_context.Guild.Id, out GuildAudioConnection guildAudioConnection))
+            if (_guildAudioConnections.TryGetValue((ulong)_commandContext.GuildId, out GuildAudioConnection guildAudioConnection))
             {
                 guildAudioConnection.AudioPlayer.Pause();
             }
         }
 
-        public void Resume()
+        public async Task HandleResumeCommandAsync()
         {
-            if (_guildAudioConnections.TryGetValue(_context.Guild.Id, out GuildAudioConnection guildAudioConnection))
+            if (_guildAudioConnections.TryGetValue((ulong)_commandContext.GuildId, out GuildAudioConnection guildAudioConnection))
             {
                 guildAudioConnection.AudioPlayer.Resume();
             }
         }
 
-        public void SetVolume(float volume)
+        public async Task HandleStopCommandAsync()
         {
-            if (_guildAudioConnections.TryGetValue(_context.Guild.Id, out GuildAudioConnection guildAudioConnection))
+            if (_guildAudioConnections.TryRemove((ulong)_commandContext.GuildId, out GuildAudioConnection guildAudioConnection))
+            {
+                guildAudioConnection.Dispose();
+            }
+        }
+
+        public async Task HandleVolumeCommandAsync()
+        {
+            float volume = AudioPlayer.DEFAULT_VOLUME;
+
+            try
+            {
+                volume = float.Parse(_commandContext.Data.Options.First().ToString());
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e.Message);
+                await _commandContext.RespondAsync("Failed to parse new volume, reverting to default");
+            }
+
+            if (_guildAudioConnections.TryGetValue((ulong)_commandContext.GuildId, out GuildAudioConnection guildAudioConnection))
             {
                 guildAudioConnection.AudioPlayer.SetVolume(volume);
             }
         }
 
-        public void Stop()
+        public async Task HandleLeaveCommandAsync()
         {
-            if (_guildAudioConnections.TryRemove(_context.Guild.Id, out GuildAudioConnection guildAudioConnection))
+            ulong guildId = (ulong)_commandContext.GuildId;
+
+            if (!_guildAudioConnections.TryGetValue(guildId, out GuildAudioConnection guildAudioConnection))
             {
-                guildAudioConnection.Dispose();
+                await _commandContext.Channel.SendMessageAsync("I'm not connected ya dumbfuck");
             }
+
+            _guildAudioConnections.TryRemove(new KeyValuePair<ulong, GuildAudioConnection>(guildId, guildAudioConnection));
+
+            await guildAudioConnection.DiscordAudioClient?.StopAsync();
+            guildAudioConnection.Dispose();
+
+            await _commandContext.Channel.SendMessageAsync("Disconnected from voice channel");
         }
     }
 }

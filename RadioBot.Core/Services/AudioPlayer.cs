@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 using TheKrystalShip.Logging;
 using TheKrystalShip.RadioBot.Tools;
 
-namespace TheKrystalShip.RadioBot.Core.Services
+namespace TheKrystalShip.RadioBot.Core
 {
     public class AudioPlayer : IDisposable
     {
+        public const float DEFAULT_VOLUME = 0.25f;
+
         public bool IsPlaying { get; private set; } = false;
-        public float Volume { get; set; } = 0.25f; // Min/Max: 0.0f / 1.0f. Default: 0.25f
+        public float Volume { get; set; } = DEFAULT_VOLUME;
 
         public Process AudioProcess { get; private set; } = null;
         public AudioOutStream DiscordAudioStream { get; private set; } = null;

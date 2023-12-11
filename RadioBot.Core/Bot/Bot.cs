@@ -4,7 +4,6 @@ using Discord.WebSocket;
 using System.Threading.Tasks;
 
 using TheKrystalShip.DependencyInjection;
-using TheKrystalShip.RadioBot.Core.Commands;
 
 namespace TheKrystalShip.RadioBot.Core
 {
@@ -27,8 +26,6 @@ namespace TheKrystalShip.RadioBot.Core
         {
             _commandHandler = Container.Get<CommandHandler>();
             _commandHandler.SetClient(this);
-
-            MessageReceived += _commandHandler.OnClientMessageReceivedAsync;
         }
 
         public async Task InitAsync(string token)

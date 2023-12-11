@@ -4,7 +4,7 @@ namespace TheKrystalShip.RadioBot
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static async Task Main()
         {
             await BotBuilder
                 .UseStartup<Startup>()

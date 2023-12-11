@@ -1,10 +1,8 @@
-﻿using TheKrystalShip.RadioBot.Core;
-using TheKrystalShip.RadioBot.Tools;
-using TheKrystalShip.RadioBot.Core.Commands;
-using TheKrystalShip.RadioBot.Core.Services;
+﻿using TheKrystalShip.RadioBot.Tools;
 using TheKrystalShip.DependencyInjection;
+using System.Threading.Tasks;
 
-namespace TheKrystalShip.RadioBot
+namespace TheKrystalShip.RadioBot.Core
 {
     public class Startup
     {
@@ -19,7 +17,7 @@ namespace TheKrystalShip.RadioBot
 
         public Startup ConfigureServices()
         {
-            Container.Add<IRadioService, RadioService>();
+            Container.Add<RadioService>();
 
             return this;
         }
