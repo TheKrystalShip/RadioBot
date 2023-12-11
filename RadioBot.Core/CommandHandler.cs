@@ -13,9 +13,9 @@ namespace TheKrystalShip.RadioBot.Core
 {
     public class CommandHandler : CommandService
     {
-        private readonly ILogger<CommandHandler> _logger;
-        private DiscordSocketClient _client;
-        private RadioService _radioService;
+        private readonly Logger<CommandHandler> _logger;
+        private readonly Bot _botClient;
+        private readonly RadioService _radioService;
 
         private static readonly CommandServiceConfig __defaultCommandServiceConfig = new()
         {
@@ -33,21 +33,15 @@ namespace TheKrystalShip.RadioBot.Core
         {
             _logger = new Logger<CommandHandler>();
             _radioService = Container.Get<RadioService>();
+            _botClient = Container.Get<Bot>();
+
+            _botClient.Log += OnLogAsync;
+            _botClient.SlashCommandExecuted += HandleSlashCommand;
 
             Log += OnLogAsync;
         }
 
-        public void SetClient(DiscordSocketClient client)
-        {
-            _client = client;
-            _client.Log += OnLogAsync;
-            _client.SlashCommandExecuted += HandleCommand;
-
-            // Only has to run once unless commands are changed. Keep commented
-            //_client.Ready += RegisterSlashCommands;
-        }
-
-        public async Task HandleCommand(SocketSlashCommand command)
+        public async Task HandleSlashCommand(SocketSlashCommand command)
         {
             // All commands require the user to specify a game.
             // string game = (string)command.Data.Options.First().Value;
@@ -103,7 +97,7 @@ namespace TheKrystalShip.RadioBot.Core
             // Commands are built for a specific guild, global commands require a lot higher
             // level of permissions and they are not needed for our use case.
             string guildId = AppSettings.Get("bot:guildId") ?? "";
-            SocketGuild guild = _client.GetGuild(ulong.Parse(guildId));
+            SocketGuild guild = _botClient.GetGuild(ulong.Parse(guildId));
 
             List<ApplicationCommandProperties> commandsToRegister = [
                 new SlashCommandBuilder()
@@ -141,7 +135,7 @@ namespace TheKrystalShip.RadioBot.Core
             try
             {
                 // This takes time and will block the gateway
-                foreach (var command in commandsToRegister)
+                foreach (ApplicationCommandProperties command in commandsToRegister)
                 {
                     await guild.CreateApplicationCommandAsync(command);
                 }

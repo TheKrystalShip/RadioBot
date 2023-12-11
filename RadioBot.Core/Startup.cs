@@ -9,8 +9,6 @@ namespace TheKrystalShip.RadioBot.Core
         public Startup ConfigureCommands()
         {
             Container.Add<CommandHandler>();
-            // Call to instantiate
-            Container.Get<CommandHandler>();
 
             return this;
         }
@@ -25,14 +23,18 @@ namespace TheKrystalShip.RadioBot.Core
         public Startup ConfigureClient()
         {
             Bot client = new Bot();
-
             client.InitAsync(AppSettings.Get("bot:token")).Wait();
+
+            Container.Add(client);
 
             return this;
         }
 
         public async Task InitAsync()
         {
+            // Call to instantiate
+            Container.Get<CommandHandler>();
+
             await Task.Delay(-1);
         }
     }

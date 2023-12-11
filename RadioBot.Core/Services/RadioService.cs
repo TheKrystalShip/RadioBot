@@ -16,7 +16,7 @@ namespace TheKrystalShip.RadioBot.Core
         private SocketSlashCommand _commandContext;
 
         private readonly ConcurrentDictionary<ulong, GuildAudioConnection> _guildAudioConnections;
-        private readonly ILogger<RadioService> _logger;
+        private readonly Logger<RadioService> _logger;
 
         public RadioService()
         {

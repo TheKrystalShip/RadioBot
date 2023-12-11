@@ -6,8 +6,7 @@ namespace TheKrystalShip.RadioBot
     {
         public static async Task Main()
         {
-            await BotBuilder
-                .UseStartup<Startup>()
+            await new Startup()
                 .ConfigureServices()
                 .ConfigureCommands()
                 .ConfigureClient()
